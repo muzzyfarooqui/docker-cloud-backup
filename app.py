@@ -1,40 +1,46 @@
-from minio import Minio
-from minio.error import S3Error
+import os
+
+import boto3
+from botocore.exceptions import ClientError
 
 
-# MinIO connection settings
-client = Minio(
-    "localhost:9000",
-    access_key="admin",
-    secret_key="password123",
-    secure=False
+s3 = boto3.client(
+    "s3",
+    region_name="us-east-1"
 )
 
-bucket_name = "docker-cloud-backup"
+bucket_name = "muzammil-cloud-storage-677296949574-us-east-1-an"
 
 
 def object_exists(object_name):
-    """Check if an object exists in the bucket."""
+    """Check whether an object exists in the AWS S3 bucket."""
     try:
-        objects = client.list_objects(bucket_name)
+        s3.head_object(
+            Bucket=bucket_name,
+            Key=object_name
+        )
+        return True
 
-        for obj in objects:
-            if obj.object_name == object_name:
-                return True
+    except ClientError as error:
+        error_code = error.response["Error"]["Code"]
 
-        return False
+        if error_code in ("404", "NoSuchKey", "NotFound"):
+            return False
 
-    except S3Error:
-        return False
+        raise
 
 
 def upload_file():
-    """Upload a local file to the MinIO bucket."""
-    file_path = input("\nEnter the file name to upload: ")
-    object_name = file_path
+    """Upload a local file to the AWS S3 bucket."""
+    file_path = input("\nEnter the file name or path to upload: ")
+    object_name = os.path.basename(file_path)
 
     try:
-        client.fput_object(bucket_name, object_name, file_path)
+        s3.upload_file(
+            file_path,
+            bucket_name,
+            object_name
+        )
 
         print("\n==========================================")
         print("✅ Upload Successful")
@@ -46,43 +52,52 @@ def upload_file():
         print(f"\n❌ Upload Failed: '{file_path}' was not found on your computer.")
         print("Returning to main menu...")
 
-    except S3Error as error:
+    except Exception as error:
         print(f"\n❌ Upload Failed: {error}")
         print("Returning to main menu...")
 
 
 def list_files():
-    """List all objects stored in the MinIO bucket."""
+    """List all objects stored in the AWS S3 bucket."""
     print("\nObjects in bucket:\n")
 
     try:
-        objects = client.list_objects(bucket_name)
-        found = False
+        response = s3.list_objects_v2(
+            Bucket=bucket_name
+        )
 
-        for obj in objects:
-            print(f"• {obj.object_name}")
-            found = True
-
-        if not found:
+        if "Contents" not in response:
             print("Bucket is empty.")
+            return
 
-    except S3Error as error:
+        for obj in response["Contents"]:
+            print(f"• {obj['Key']}")
+
+    except Exception as error:
         print(f"\n❌ Could not list files: {error}")
         print("Returning to main menu...")
 
 
 def download_file():
-    """Download an object from MinIO to the local project folder."""
+    """Download an object from AWS S3 to the local project folder."""
     object_name = input("\nEnter the file name to download: ")
-    download_path = "downloaded_" + object_name
 
     if not object_exists(object_name):
-        print(f"\n❌ Download Failed: '{object_name}' does not exist in the bucket.")
+        print(
+            f"\n❌ Download Failed: "
+            f"'{object_name}' does not exist in the bucket."
+        )
         print("Returning to main menu...")
         return
 
+    download_path = "downloaded_" + object_name
+
     try:
-        client.fget_object(bucket_name, object_name, download_path)
+        s3.download_file(
+            bucket_name,
+            object_name,
+            download_path
+        )
 
         print("\n==========================================")
         print("✅ Download Successful")
@@ -90,21 +105,26 @@ def download_file():
         print(f"File:     {object_name}")
         print(f"Saved as: {download_path}")
 
-    except S3Error as error:
+    except Exception as error:
         print(f"\n❌ Download Failed: {error}")
         print("Returning to main menu...")
 
 
 def delete_file():
-    """Delete an object from the MinIO bucket."""
+    """Delete an object from the AWS S3 bucket."""
     object_name = input("\nEnter the file name to delete: ")
 
     if not object_exists(object_name):
-        print(f"\n❌ Delete Failed: '{object_name}' does not exist in the bucket.")
+        print(
+            f"\n❌ Delete Failed: "
+            f"'{object_name}' does not exist in the bucket."
+        )
         print("Returning to main menu...")
         return
 
-    confirm = input(f"Are you sure you want to delete '{object_name}'? (y/n): ")
+    confirm = input(
+        f"Are you sure you want to delete '{object_name}'? (y/n): "
+    )
 
     if confirm.lower() != "y":
         print("\nDelete cancelled.")
@@ -112,14 +132,17 @@ def delete_file():
         return
 
     try:
-        client.remove_object(bucket_name, object_name)
+        s3.delete_object(
+            Bucket=bucket_name,
+            Key=object_name
+        )
 
         print("\n==========================================")
         print("✅ Delete Successful")
         print("==========================================")
         print(f"Deleted: {object_name}")
 
-    except S3Error as error:
+    except Exception as error:
         print(f"\n❌ Delete Failed: {error}")
         print("Returning to main menu...")
 
@@ -146,15 +169,23 @@ while True:
 
     if choice == "1":
         upload_file()
+
     elif choice == "2":
         list_files()
+
     elif choice == "3":
         download_file()
+
     elif choice == "4":
         delete_file()
+
     elif choice == "5":
         print("\n👋 Thanks for using Cloud Object Storage Client!")
         break
+
     else:
-        print("\n❌ Invalid option. Please choose a number between 1 and 5.")
+        print(
+            "\n❌ Invalid option. "
+            "Please choose a number between 1 and 5."
+        )
         print("Returning to main menu...")

@@ -2,30 +2,32 @@
 
 ## Overview
 
-Cloud Object Storage Client is a Dockerized Python application that provides a simple command-line interface (CLI) for interacting with S3-compatible object storage. The project uses MinIO running inside Docker to provide a local object storage environment for development and testing before migrating to AWS S3.
+Cloud Object Storage Client is a Python command-line application that allows users to upload, list, download, and delete files stored in Amazon S3.
 
-The application demonstrates cloud engineering fundamentals including Docker containerization, object storage, client-server architecture, SDK integration, persistent storage, and Python application development.
+The project was originally developed using Docker and MinIO to understand object storage fundamentals in a local environment before being migrated to AWS S3. The migration demonstrates how a well-designed application can transition from a self-managed object storage server to a managed cloud service with minimal changes to the application logic.
+
+The project demonstrates cloud engineering fundamentals including object storage, client-server architecture, AWS IAM authentication, SDK integration, and Python application development.
 
 ---
 
 ## Features
 
-- ✅ Upload files to object storage
-- ✅ List files stored in a bucket
-- ✅ Download files from object storage
-- ✅ Delete files from object storage
+- ✅ Upload files to Amazon S3
+- ✅ List objects stored in an S3 bucket
+- ✅ Download objects from Amazon S3
+- ✅ Delete objects from Amazon S3
 - ✅ Interactive command-line interface (CLI)
+- ✅ AWS IAM authentication
 - ✅ Graceful error handling
-- ✅ Persistent storage using Docker volumes
 
 ---
 
 ## Technologies Used
 
 - Python
-- Docker
-- Docker Compose
-- MinIO
+- Amazon S3
+- AWS IAM
+- boto3
 - Git
 - GitHub
 - Visual Studio Code
@@ -34,22 +36,21 @@ The application demonstrates cloud engineering fundamentals including Docker con
 
 ## Skills Demonstrated
 
-- Docker containerization
-- Docker Compose configuration
 - Python application development
-- Object storage fundamentals
+- Amazon S3 object storage
+- AWS IAM authentication
 - Client-server architecture
-- SDK integration
-- Persistent storage with Docker volumes
+- SDK integration using boto3
 - Command-line interface (CLI) development
 - Error handling
 - Git version control
+- Cloud application migration
 
 ---
 
 ## Architecture
 
-The diagram below illustrates how the Cloud Storage CLI communicates with the MinIO server to perform object storage operations. The MinIO server runs inside a Docker container, and uploaded objects are stored in a bucket backed by a persistent Docker volume.
+The diagram below illustrates how the Python application communicates with Amazon S3. The application uses the AWS SDK (`boto3`) to send authenticated HTTPS requests to the Amazon S3 service, which stores uploaded objects in the configured S3 bucket.
 
 ![Architecture Diagram](images/architecture.png)
 
@@ -60,52 +61,70 @@ The diagram below illustrates how the Cloud Storage CLI communicates with the Mi
 ### 1. Clone the repository
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/muzzyfarooqui/docker-cloud-backup.git
 cd docker-cloud-backup
 ```
 
-### 2. Start the MinIO server
-
-```bash
-docker compose up
-```
-
-### 3. Activate the Python virtual environment
+### 2. Create and activate a virtual environment
 
 **macOS/Linux**
 
 ```bash
+python3 -m venv venv
 source venv/bin/activate
 ```
 
 **Windows**
 
 ```bash
+python -m venv venv
 venv\Scripts\activate
 ```
 
-### 4. Run the application
+### 3. Install dependencies
 
 ```bash
-python app.py
+pip install -r requirements.txt
+```
+
+### 4. Configure AWS credentials
+
+```bash
+aws configure
+```
+
+Provide:
+
+- AWS Access Key ID
+- AWS Secret Access Key
+- Default Region (`us-east-1`)
+- Output Format (`json`)
+
+### 5. Run the application
+
+```bash
+python3 app.py
 ```
 
 ---
 
 ## What I Learned
 
-The biggest lesson from this project was learning by building instead of memorizing commands. Throughout development, I focused on understanding how each technology worked together rather than simply making the application function.
+The biggest lesson from this project was learning by building instead of memorizing commands.
+
+Building the application locally with Docker and MinIO helped me understand how object storage works behind the scenes. Migrating the application to AWS S3 showed me that a well-designed architecture allows the storage backend to change while the application itself remains largely the same.
 
 This project strengthened my understanding of:
 
-- Docker images and containers
-- Docker Compose
-- Object storage concepts
+- Amazon S3
+- AWS IAM
+- boto3
+- Object storage
 - Buckets and objects
-- Docker volumes
 - Client-server architecture
 - SDK integration
-- HTTP API communication
+- HTTP communication
+- Authentication
 - Error handling
 - Python application design
 - Git version control
@@ -114,11 +133,9 @@ This project strengthened my understanding of:
 
 ## Future Improvements
 
-- Migrate the storage backend from MinIO to AWS S3
-- Implement AWS IAM authentication
-- Provision infrastructure using Terraform
-- Improve logging and monitoring
+- Provision AWS infrastructure using Terraform
+- Implement least-privilege IAM policies
+- Add CloudWatch monitoring and logging
+- Build a web interface
 - Add automated testing
-- Build a web interface for interacting with object storage
-
-This project is intended to evolve from a local MinIO implementation into a production-oriented cloud storage application using AWS services and Infrastructure as Code.
+- Implement CI/CD using GitHub Actions
